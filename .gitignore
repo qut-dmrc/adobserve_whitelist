@@ -11,3 +11,4 @@ node_modules/
 raw_json/
 config.py
 combine.py
+*.js
