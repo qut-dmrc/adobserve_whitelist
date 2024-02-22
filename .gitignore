@@ -1,0 +1,13 @@
+.env
+*.csv
+*.xlsx
+*.png
+*.json
+doc/
+__pycache__/
+compressed/
+media/
+node_modules/
+raw_json/
+config.py
+combine.py
