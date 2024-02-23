@@ -73,7 +73,7 @@ def combine_new_data_with_existing(tablenames, bucket_name):
         else:
             ## so that ads that were scraped from today backdates to 4 days ago are all included, reason being that the scraping may take more than one day. 
             # If scrapedDate is only set to today's date, ad data scraped yesterday or the day before will not be included
-            dataframes.append(downloadTablesFromBQ(name,"WHERE ScrapedDate BETWEEN '{}' AND".format((datetime.now() - timedelta(days=4)).strftime('%Y-%m-%d'),datetime.now().strftime('%Y-%m-%d'))))
+            dataframes.append(downloadAlcoholLinkage(name,"WHERE ScrapedDate BETWEEN '{}' AND '{}'".format((datetime.now() - timedelta(days=4)).strftime('%Y-%m-%d'),datetime.now().strftime('%Y-%m-%d'))))
     [df_page,df_ad,df_card,df_category] = dataframes 
     df_page = pd.merge(df_page,df_category, how='inner', on='id')
     # df_page = pd.read_csv("page_info.csv",low_memory=False)
@@ -92,16 +92,19 @@ def combine_new_data_with_existing(tablenames, bucket_name):
             ad_archive_id = int(ad['adArchiveID'])
             ad_map[ad_archive_id] = ad
     # new raw json
-    with open("raw_json/"+datetime.now().strftime("%Y-%m-%d")+".json",'r') as f:
-    # with open("raw_json/alcohol-linkage_last.json",'r') as f:
-        print("adding new raw json")
-        new_ads = json.load(f)
-        for ad in new_ads:
-            ad_archive_id = int(ad['adArchiveID'])
-            if ad_archive_id in list(ad_map.keys()):
-                ad_map[ad_archive_id] = {**ad_map[ad_archive_id], **ad} # ads with the same ad_archive_id will replace the value of shared attrbiutes with the old one 
-            else:
-                ad_map[ad_archive_id] = ad
+    for _,_,files in walk('raw_json'):
+        for file in files:
+            if '20' in file:
+                with open("raw_json/"+file,'r') as f:
+                # with open("raw_json/alcohol-linkage_last.json",'r') as f:
+                    print("adding new raw json")
+                    new_ads = json.load(f)
+                    for ad in new_ads:
+                        ad_archive_id = int(ad['adArchiveID'])
+                        if ad_archive_id in list(ad_map.keys()):
+                            ad_map[ad_archive_id] = {**ad_map[ad_archive_id], **ad} # ads with the same ad_archive_id will replace the value of shared attrbiutes with the old one 
+                        else:
+                            ad_map[ad_archive_id] = ad
 
     for col in df_ad.columns:
         if 'datetime64' in str(df_ad[col].dtype):
