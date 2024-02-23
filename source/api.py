@@ -132,6 +132,8 @@ class FB_AD_API(API):
         # self.conn = sql.connect('alcohol_ads.db')
         # self.sqlc = self.conn.cursor()
         # self.create_db_tables()
+        if not os.path.isdir(self.media_dir):
+            os.mkdir(self.media_dir)
 
     def create_db_tables(self):
         self.sqlc.execute("CREATE TABLE IF NOT EXISTS alcohol_ads("+
@@ -496,7 +498,6 @@ class FB_AD_API(API):
             for root,dirs,files in os.walk(folder):
                 for file in files:
                     # if datetime.now().strftime("%Y-%m-%d") not in file:
-
                     s3.upload_file(path.join(root,file),self.dataset,path.join(root,file))
                     remove(path.join(root,file))
         

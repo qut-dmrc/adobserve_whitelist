@@ -57,17 +57,38 @@ pip install -r requirements.txt
      - d. Ids.txt contains all the IDs to be added to the tracking list.
      - e. Final excel/csv file with original data and id column are for reference. 
   6. Use the ids to collect ads from ad library. \[Check steps to collect ads from id regularly\]
-  7. Json files in results can be uploaded to a structured database of choice \[Google Big Query in our example\] named as page data
-      a. Run update_gbq_tables_page_info.py to gather info for ids that were added later
-      b. Run update_gbq_tables.py
-  8. Update page category data on GBQ too.
+  7. Json files in results can be uploaded to a structured database of choice \[Google Big Query in our example\] named as page data \[Optional\]
+     - a. Run update_gbq_tables.py
+  8. Update page category data on GBQ too. \[Optional\]
       a. update_page_category.py
+### Steps to start collecting for the first time
+1. Create bucket of the same name as the dataset in AWS S3
+2. Check config.py contains IDs to track assigned to variable pages, point `bq_project` and `bq_dataset` to your BQ project and dataset. 
+   E.g. pages = ['123','456','789']
+3. Create folders media/ and raw_json/ inside source/
+4. Modify `if __name__ == '__main__':`
+   ```
+    tablenames = ['page_info', 'ad_main','ad_snapshot_card','page_category']
+    dataset = "whitelist_test"
+    mainLoop(dataset, True, False)
+    # combine_new_data_with_existing(tablenames, dataset)
+    push_json_to_s3(dataset,"raw_json/","raw_json/")
+     ```
+5. Run `python __main__.py` in the terminal from whitelist_test\source
+
 
 ### Steps to collect data regularly
-1. Check config.py contains IDs to track assigned to variable pages.
-   E.g. pages = ['123','456','789']
-2.  Create folders media/ and raw_json/ inside source/
-3.  Comment out `combine_new_data_with_existing(tablenames, dataset)` when you run it for the first time
+1. Update session/cookies each time
+2. `mainLoop(dataset, False, False)`
+3. Modify `if __name__ == '__main__':`
+   ```
+   if __name__ == '__main__':
+    tablenames = ['page_info', 'ad_main','ad_snapshot_card','page_category']
+    dataset = "whitelist_test"
+    mainLoop(dataset, False, False)
+    combine_new_data_with_existing(tablenames, dataset)
+    push_json_to_s3(dataset,"raw_json/","raw_json/")
+   ```
 4.  run `python __main__.py`
 5. If the process gets interrupted midway through the list of pages, change the latest json file with today's date to the name of your dataset(e.g. whitelist_test) and set mainLoop in `if __name__ == '__main__'` to `mainLoop(dataset, False, True)`
 

@@ -1,24 +1,29 @@
 from google.cloud import bigquery
 from datetime import datetime
-from os import remove
+from os import remove, path
 import pandas as pd
 import os
 import logging
-
+from google.cloud import bigquery
+from decouple import config
+import sys
+parent_directory = os.path.abspath('..')
+sys.path.append(parent_directory)
+from source.schema import PAGE_SCHEMA
 
 class Pusher:
-    def __init__(self, config):
-        self.project = config.bq_project
-        self.dataset = config.bq_dataset
-        self.credentials = config.bq_credentials
+    def __init__(self):
+        self.project = "dmrc-data"
+        self.dataset = "whitelist_test"
+        self.credentials = config("BQ_CREDENTIAL_FILE")
 
-    def push_to_gbq(self, file, schema=None):
+    def push_to_gbq(self, file, dest_table, schema=None):
         [filename, file_ext] = file.split('.')
         date_today = datetime.now().strftime("%Y-%m-%d")
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = self.credentials
         # Construct a BigQuery client object.
         client = bigquery.Client()
-        table_id = self.dataset+'.'+filename
+        table_id = self.dataset+'.'+dest_table
         table = bigquery.Table(client.project+'.'+table_id)
         # datasets = list(client.list_datasets())
         try:
@@ -64,10 +69,9 @@ class Pusher:
                 table.num_rows, len(table.schema), table_id
             )
         )
-        logging.basicConfig(filename='info_bq.log', level=logging.INFO)
-        logging.info(
-            "{}: Loaded {} rows and {} columns to {}".format(
-                datetime.now(),table.num_rows, len(table.schema), table_id
-            )
-        )
+
+pusher = Pusher()
+page_info_name = "whitelist_test.json"
+dest_table = "page_info"
+pusher.push_to_gbq(page_info_name.split('/')[-1],dest_table)
 
